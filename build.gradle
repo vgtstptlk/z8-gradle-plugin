@@ -4,6 +4,10 @@ plugins {
 	id 'eclipse'
 }
 
+configurations {
+	closureCompiler
+}
+
 repositories {
 	mavenLocal()
 	maven { url 'http://mvn.revoltsoft.ru/' }
@@ -13,6 +17,7 @@ ext.z8Version = '2.0'
 
 dependencies {
 	compile ("org.zenframework.z8:org.zenframework.z8.compiler:${z8Version}") { transitive = true }
+	closureCompiler 'com.google.javascript:closure-compiler:+'
 }
 
 gradlePlugin {
@@ -75,7 +80,7 @@ eclipse {
 publishing {
 	repositories {
 		mavenLocal()
-		if (project.hasProperty('mavenPublishRemote') && mavenPublishRemote) {
+		/*if (project.hasProperty('mavenPublishRemote') && mavenPublishRemote) {
 			maven {
 				url = "sftp://revoltsoft.ru:22/opt/mvn"
 				credentials {
@@ -83,11 +88,29 @@ publishing {
 					password revoltPassword
 				}
 			}
-		}
+		}*/
 	}
 	publications {
 		maven(MavenPublication) {
 			from components.java
 		}
 	}
+}
+
+task minifyJs(type: JavaExec) {
+	def source = ''
+	def output = ''
+	def warningLevel = ''
+	def languageIn = ''
+	def languageOut = ''
+	def jsOutputFile = ''
+
+	classpath configurations.closureCompiler
+	main = 'com.google.javascript.jscomp.CommandLineRunner'
+
+	args (['--rewrite_polyfills=false',
+			String.format("--warning_level=", warningLevel),
+			String.format("--language_in=%s", languageIn),
+			String.format("--language_out=%s", languageOut),
+			String.format("--js_output_file=%s", jsOutputFile)])
 }
